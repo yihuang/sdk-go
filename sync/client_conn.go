@@ -20,7 +20,17 @@ func (c *DefaultClient) nextID() (id string) {
 }
 
 func (c *DefaultClient) responsesWorker() {
+	// sending to channel could panic due to concurrent close
+	defer func() {
+		c.wg.Done()
+
+		if err := recover(); err != nil {
+			c.log.Errorw("panic in responsesWorker", "error", err)
+		}
+	}()
+
 	for {
+		c.log.Infof("read socket")
 		res, err := c.readSocket()
 		if err != nil {
 			if errors.Is(err, context.Canceled) ||
@@ -43,8 +53,6 @@ func (c *DefaultClient) responsesWorker() {
 			ch <- res
 		}
 	}
-
-	c.wg.Done()
 }
 
 func (c *DefaultClient) makeRequest(ctx context.Context, req *sync.Request) (chan *sync.Response, error) {
