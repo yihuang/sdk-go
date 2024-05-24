@@ -30,7 +30,6 @@ func (c *DefaultClient) responsesWorker() {
 	}()
 
 	for {
-		c.log.Infof("read socket")
 		res, err := c.readSocket()
 		if err != nil {
 			if errors.Is(err, context.Canceled) ||
